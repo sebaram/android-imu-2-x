@@ -39,7 +39,6 @@ import kr.ac.kaist.arrc.R;
 import kr.ac.kaist.arrc.imustreamlib.CONSTANTS;
 import kr.ac.kaist.arrc.imustreamlib.SocketComm;
 import kr.ac.kaist.arrc.imustreamlib.ReturningValues;
-import kr.ac.kaist.arrc.imustreamlib.SendWriteService;
 import kr.ac.kaist.arrc.imustreamlib.VibratorTool;
 import kr.ac.kaist.arrc.imustreamlib.network.NetUtils;
 import kr.ac.kaist.arrc.imustreamlib.network.WifiReceiver;
@@ -51,7 +50,7 @@ public class MainActivity extends WearableActivity {
 
 
     private TextView tv_targetip, tv_deviceinfo;
-    Button btn_startstop, btn_stopall, btn_freqchange;
+    Button btn_startstop, btn_stopall, btn_write, btn_freqchange;
 
     private VibratorTool vib_tool;
 
@@ -112,11 +111,15 @@ public class MainActivity extends WearableActivity {
         vib_tool = new VibratorTool((Vibrator) getSystemService(Context.VIBRATOR_SERVICE));
 
         btn_stopall = (Button) findViewById(R.id.btn_stopall);
-        btn_stopall.setOnClickListener(btn2ClickListener);
+        btn_stopall.setOnClickListener(btnStopClickListener);
         btn_stopall.setVisibility(View.GONE);
 
+        btn_write = (Button) findViewById(R.id.btn_write);
+        btn_write.setOnClickListener(btnWriteClickListener );
+//        btn_write.setVisibility(View.GONE);
+
         btn_freqchange = (Button) findViewById(R.id.btn3);
-        btn_freqchange.setOnClickListener(btn3ClickListener);
+        btn_freqchange.setOnClickListener(btnFreqClickListener);
         btn_freqchange.setVisibility(View.GONE);
 
         // Enables Always-on
@@ -214,7 +217,10 @@ public class MainActivity extends WearableActivity {
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
 
+
         wakeLock.release();
+        unregisterReceiver(new WifiReceiver());
+
         super.onDestroy();
     }
 
@@ -224,7 +230,7 @@ public class MainActivity extends WearableActivity {
                 msgSending = true;
                 vib_tool.vibrateError();
 
-                startService();
+                startSendWriteService();
                 updateUI();
             }else{
                 Toast.makeText(getApplicationContext(), "LONG CLICK to STOP", Toast.LENGTH_SHORT).show();
@@ -294,7 +300,8 @@ public class MainActivity extends WearableActivity {
                 msgSending = false;
                 msgWriting = false;
 
-                startService(); // 서비스 종료
+//                startSendWriteService(); // 서비스 종료
+                stopSendWriteService();
                 updateUI();
                 Toast.makeText(getApplicationContext(), "Service Terminated", Toast.LENGTH_SHORT).show();
 
@@ -308,12 +315,12 @@ public class MainActivity extends WearableActivity {
         }
     };
 
-    Button.OnClickListener btn2ClickListener = new Button.OnClickListener() {
+    Button.OnClickListener btnStopClickListener = new Button.OnClickListener() {
         public void onClick(View arg0) {
             msgSending = false;
             msgWriting = false;
 
-            startService(); // 서비스 종료
+            startSendWriteService(); // 서비스 종료
 //            stopService(intent); // 서비스 종료
             updateUI();
 
@@ -321,13 +328,20 @@ public class MainActivity extends WearableActivity {
         }
     };
 
-    Button.OnClickListener btn3ClickListener = new Button.OnClickListener() {
+    Button.OnClickListener btnWriteClickListener = new Button.OnClickListener() {
         public void onClick(View arg0) {
-            /*if(!msgWriting){
+            if(!msgWriting){
                 msgWriting = true;
             }
-            startService();
-            updateUI();*/
+            startSendWriteService();
+            updateUI();
+
+            updateUI();
+
+        }
+    };
+    Button.OnClickListener btnFreqClickListener = new Button.OnClickListener() {
+        public void onClick(View arg0) {
 
             if(CONSTANTS.SENSOR_DELAY==8){
                 // switch to 200
@@ -355,7 +369,7 @@ public class MainActivity extends WearableActivity {
                 this.NAME = values.NAME;
             }
 
-            startService();
+            startSendWriteService();
             updateUI();
         }
 
@@ -394,11 +408,11 @@ public class MainActivity extends WearableActivity {
 
 
         if (msgWriting) {
-            btn_freqchange.setTextColor(Color.rgb(50,200,50));
-            btn_freqchange.setText(R.string.write_on);
+            btn_write.setTextColor(Color.rgb(50,200,50));
+            btn_write.setText(R.string.write_on);
         }else{
-            btn_freqchange.setTextColor(Color.rgb(255,255,255));
-            btn_freqchange.setText(R.string.write_start);
+            btn_write.setTextColor(Color.rgb(255,255,255));
+            btn_write.setText(R.string.write_start);
         }
 
         if(CONSTANTS.SENSOR_DELAY==4){
@@ -412,10 +426,13 @@ public class MainActivity extends WearableActivity {
         }
     }
 
-    private void startService(){
+    private void startSendWriteService(){
         Intent intent = new Intent(
                 getApplicationContext(),//현재제어권자
-                SendWriteService.class); // 이동할 컴포넌트
+                SendWriteWear.class); // 이동할 컴포넌트
+//        Intent intent = new Intent(
+//                getApplicationContext(),//현재제어권자
+//                SendWriteService.class); // 이동할 컴포넌트
         intent.putExtra("Send", msgSending);
         intent.putExtra("Write", msgWriting);
         intent.putExtra("Name", NAME);
@@ -425,6 +442,21 @@ public class MainActivity extends WearableActivity {
         startService(intent); // 서비스 시작
 
     }
+    private void stopSendWriteService(){
+        Intent intent = new Intent(
+                getApplicationContext(),//현재제어권자
+                SendWriteWear.class); // 이동할 컴포넌트
+
+//        Intent intent = new Intent(
+//                getApplicationContext(),//현재제어권자
+//                SendWriteService.class); // 이동할 컴포넌트
+
+        SocketComm.writeCurrentStatus(msgSending, msgWriting, NAME);
+
+        stopService(intent); // 서비스 시작
+
+    }
+
     private boolean isServiceRunning() {
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)){

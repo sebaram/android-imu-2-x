@@ -20,8 +20,10 @@ import pandas as pd
 class imus_UDP(threading.Thread):
     def __init__(self, Port = 12562, w_size=100*60):
         threading.Thread.__init__(self)
-        
+
+        # keep empty to get all incoming packet
         self.IP = ""
+
         self.Port = Port
         
         self.PAUSE_loop = True
@@ -86,8 +88,8 @@ class imus_UDP(threading.Thread):
         self.queue.put(whole_data)
         
     
-    def setLocalIP(self):
-        self.IP = socket.gethostbyname(socket.gethostname())
+    # def setLocalIP(self):
+    #     self.IP = socket.gethostbyname(socket.gethostname())
 
     def setIP_Port(self, IP, Port):
         self.IP = IP
@@ -108,6 +110,7 @@ class imus_UDP(threading.Thread):
         if new_id != None:
             print("ADD new data incoming: ", new_id)
             self.online_save_file[new_id] = open(self.file_prefix+self.participant_name+"_"+new_id+".csv","w") 
+            print("file_created: "+self.file_prefix+self.participant_name+"_"+new_id+".csv")
             if not new_id == "127.0.0.1":
                 self.datas[new_id] = np.empty((self.w_size, self.numData))
                 self.online_save_file[new_id].write("ServerTime,Gx,Gy,Gz,Ax,Ay,Az,ROTx,ROTy,ROTz,ROTw,DeviceTime\n")
@@ -168,14 +171,13 @@ class imus_UDP(threading.Thread):
 # #                filtered_datas[one_key] = self.datas[one_key][~np.isnan(self.datas[one_key]).all(axis=1)]
 #             return filtered_datas
 #==============================================================================
-    def startCollecting(self):
-        self.PAUSE_loop = False
-        self.resetDATAs()
-    def stopCollecting(self):
-        self.PAUSE_loop = True
-            
+
+           
         
     def run(self):
+        self.PAUSE_loop = False
+        self.STOP_loop = False
+        
         while True:
             
             if self.STOP_loop:
@@ -187,12 +189,12 @@ class imus_UDP(threading.Thread):
                     data, address = self.serverSocket.recvfrom(2048)
                     
                     swap_data = bytearray(data)
-#                    float_len = int(len(data)/4)
                     swap_data.reverse()
                     
                     DATA_NUM = struct.unpack("i", swap_data[-4:])[0]
+                    
                     for i in range(DATA_NUM):
-                        this_data = swap_data[-(48*i+52):-(48*i+4)]
+                        this_data = swap_data[-(52*(i+1)):-(52*i+4)]
                         float_list = struct.unpack(self.dataFormat, this_data)
                         
                         float_arr = np.array(float_list+(current_milli_time(),))
@@ -244,22 +246,29 @@ if __name__ == "__main__":
     imu_get.start()
     
     
-    imu_get.startCollecting()
+#    imu_get.startCollecting()
+    
+    dt = 1
     last_t = 0
     while True:
 #        for one in imu_get.datas.keys():
 #            print(one, ": ", imu_get.datas[one][-1,:])
         
         try:
-            data_chunk = imu_get.getDATA(w_size=500)["192.168.0.12"]
-            one_row = imu_get.getLastData()
-        
-            count = np.count_nonzero(data_chunk[:,0]>last_t)
-            last_t = one_row[0]
-            print("count: ",count)
+            data_chunk = imu_get.getDATA(w_size=500)
         except:
             print("none") 
-        time.sleep(1)
+            
+        if type(data_chunk) == dict:
+            for key, val in data_chunk.items():
+                count = np.count_nonzero(val[:,0]>last_t)
+            
+                print("from:{} | {}sec count: {}".format(key, dt, count))
+            
+            one_row = imu_get.getLastData()
+            last_t = one_row[0]
+        
+        time.sleep(dt)
         
     imu_get.stopCollecting()
     data = imu_get.getDATA()
