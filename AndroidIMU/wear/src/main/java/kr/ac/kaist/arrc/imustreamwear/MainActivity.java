@@ -71,7 +71,8 @@ public class MainActivity extends WearableActivity {
     private Boolean msgWriting = false;
 
 
-    TwoFingersDoubleTapDetector twoFingersListener;
+//    TwoFingersDoubleTapDetector twoFingersListener;
+    SwipeInputDetector twoFingersListener;
 
     public static final String myPref = "IP_addr";
 
@@ -142,7 +143,7 @@ public class MainActivity extends WearableActivity {
 
 
         //region Exit by two fingers double tap
-        twoFingersListener = new TwoFingersDoubleTapDetector() {
+        twoFingersListener = new SwipeInputDetector() {
             @Override
             public void onTwoFingersDoubleTap() {
                 Toast.makeText(getApplicationContext(), "2 FINGERS CLOSE", Toast.LENGTH_SHORT).show();
