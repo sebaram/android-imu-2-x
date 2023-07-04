@@ -74,6 +74,7 @@ public class MainActivity extends WearableActivity {
 
 //    TwoFingersDoubleTapDetector twoFingersListener;
     SwipeInputDetector twoFingersListener;
+    private boolean showUI = true;
 
     public static final String myPref = "IP_addr";
 
@@ -118,6 +119,7 @@ public class MainActivity extends WearableActivity {
 
         btn_write = (Button) findViewById(R.id.btn_write);
         btn_write.setOnClickListener(btnWriteClickListener );
+        btn_write.setOnLongClickListener(btnWriteLongClickListener);
 //        btn_write.setVisibility(View.GONE);
 
         btn_freqchange = (Button) findViewById(R.id.btn3);
@@ -147,8 +149,17 @@ public class MainActivity extends WearableActivity {
         twoFingersListener = new SwipeInputDetector() {
             @Override
             public void onTwoFingersDoubleTap() {
-                Toast.makeText(getApplicationContext(), "2 FINGERS CLOSE", Toast.LENGTH_SHORT).show();
-                finish();
+                if(showUI){
+                    btn_startstop.setVisibility(View.GONE);
+                    btn_write.setVisibility(View.GONE);
+                    showUI = false;
+                }else{
+                    btn_startstop.setVisibility(View.VISIBLE);
+                    btn_write.setVisibility(View.VISIBLE);
+                    showUI = true;
+                }
+//                Toast.makeText(getApplicationContext(), "2 FINGERS CLOSE", Toast.LENGTH_SHORT).show();
+//                finish();
             }
 
             @Override
@@ -366,6 +377,15 @@ public class MainActivity extends WearableActivity {
 
             updateUI();
 
+        }
+
+    };
+    View.OnLongClickListener btnWriteLongClickListener = new Button.OnLongClickListener() {
+
+        public boolean onLongClick(View view) {
+            Toast.makeText(getApplicationContext(), "Long click CLOSE", Toast.LENGTH_SHORT).show();
+            finish();
+            return true;
         }
     };
     Button.OnClickListener btnFreqClickListener = new Button.OnClickListener() {

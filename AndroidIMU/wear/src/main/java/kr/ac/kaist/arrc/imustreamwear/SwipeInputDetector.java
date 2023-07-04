@@ -68,7 +68,7 @@ public abstract class SwipeInputDetector {
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d(TAG, "x,y: " + event.getX() + ", " + event.getY());
+        Log.d(TAG, "time,event,x,y: "+event.getEventTime() +","+event.getAction()+"," + event.getX() + "," + event.getY());
 
         // swipe event detection
         switch (event.getAction()) {
@@ -85,23 +85,26 @@ public abstract class SwipeInputDetector {
                 break;
             case MotionEvent.ACTION_UP:
                 if (event.getPointerCount() == 1){
-                    float x = event.getX();
-                    float y = event.getY();
-                    float angle = calculateAngle(x, y);
-                    float distance = calculateDistance(x, y);
-                    Log.d(TAG, "UP angle: " + angle + ", distance: " + distance);
-                    calLineFit();
-                    if (distance > DISTANCE_THRE) {
-                        if (angle > 45 && angle < 135) {
-                            onSwipeEvent("up");
-                        } else if (angle > 225 && angle < 315) {
-                            onSwipeEvent("down");
-                        } else if (angle > 135 && angle < 225) {
-                            onSwipeEvent("left");
-                        } else {
-                            onSwipeEvent("right");
-                        }
-                    }
+                    xPositions.add(event.getX());
+                    yPositions.add(event.getY());
+
+//                    float x = event.getX();
+//                    float y = event.getY();
+//                    float angle = calculateAngle(x, y);
+//                    float distance = calculateDistance(x, y);
+//                    Log.d(TAG, "UP angle: " + angle + ", distance: " + distance);
+//                    calLineFit();
+//                    if (distance > DISTANCE_THRE) {
+//                        if (angle > 45 && angle < 135) {
+//                            onSwipeEvent("up");
+//                        } else if (angle > 225 && angle < 315) {
+//                            onSwipeEvent("down");
+//                        } else if (angle > 135 && angle < 225) {
+//                            onSwipeEvent("left");
+//                        } else {
+//                            onSwipeEvent("right");
+//                        }
+//                    }
                 }
 
                 break;
