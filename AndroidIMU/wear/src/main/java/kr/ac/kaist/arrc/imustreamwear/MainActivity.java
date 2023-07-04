@@ -21,6 +21,7 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.wear.widget.BoxInsetLayout;
 import android.support.wearable.activity.WearableActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -149,7 +150,33 @@ public class MainActivity extends WearableActivity {
                 Toast.makeText(getApplicationContext(), "2 FINGERS CLOSE", Toast.LENGTH_SHORT).show();
                 finish();
             }
+
+            @Override
+            public void onSwipeEvent(String direction) {
+                switch(direction){
+                    case "up":
+                        Log.d(TAG, "swipe up");
+                        break;
+                    case "down":
+                        Log.d(TAG, "swipe down");
+                        break;
+                    case "left":
+                        Log.d(TAG, "swipe left");
+                        break;
+                    case "right":
+                        Log.d(TAG, "swipe right");
+                        break;
+                    default:
+                        Log.d(TAG, "swipe DEFAULT");
+                        break;
+                }
+                Toast.makeText(getApplicationContext(), "swipe "+direction, Toast.LENGTH_SHORT).show();
+            }
+
         };
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        twoFingersListener.updateDisplaySize(displayMetrics.widthPixels, displayMetrics.heightPixels);
 
         BoxInsetLayout mContainerView = findViewById(R.id.container);
         mContainerView.setOnTouchListener(new View.OnTouchListener() {
