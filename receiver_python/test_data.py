@@ -27,6 +27,7 @@ for i in range(len(start_i)):
     tmp_df = df.loc[start_i[i]:end_i[i]]
     trial_df.loc[i] = [start_i[i], end_i[i], tmp_df.time.max()-tmp_df.time.min(), input_[i], tmp_df]
 
+trial_df.to_pickle("test_data.pkl")
 #%%
 # 0: Down
 # 1: Up
