@@ -4,19 +4,27 @@ import pandas as pd
 df = pd.read_pickle("test_data.pkl")
 this_df = df.iloc[0]["df"]
 #%%
+"""
+[TODO] 
+- collect false data
+- collect true data with different position, randomly generated (walking, sitting, standing * 5 times * 2 repetition)
 
 """
+
+"""
+[Classifier]
 looking for last 150ms before Touch UP(event 1)
 - average speed
 - angle
 - direction
 - sum of distance
+- all frame has positive(negative) speed?
+- all frame has same angle?
 
 - distance from the startpoint?
 - distance from the center?
 
 add vibration feedback to know user that it is start to recognize
-
 
 """
 
