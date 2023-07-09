@@ -113,7 +113,7 @@ class imus_UDP(threading.Thread):
             print("file_created: "+self.file_prefix+self.participant_name+"_"+new_id+".csv")
             if not new_id == "127.0.0.1":
                 self.datas[new_id] = np.empty((self.w_size, self.numData))
-                self.online_save_file[new_id].write("ServerTime"+self.data_column_name+"\n")
+                self.online_save_file[new_id].write("ServerTime,"+self.data_column_name+"\n")
 
             self.delay_ms[new_id] = 0
             self.refresh_hz[new_id] = 0

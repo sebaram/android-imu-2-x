@@ -11,6 +11,8 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+
 import kr.ac.kaist.arrc.R;
 import kr.ac.kaist.arrc.imustreamlib.SendWriteService;
 
@@ -41,11 +43,7 @@ public class SendWriteWear extends SendWriteService {
         startForeground(FOREGROUND_ID, notification);
         Log.d(TAG, "foreground started");
     }
-    @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
+
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -66,5 +64,17 @@ public class SendWriteWear extends SendWriteService {
 
         stopForeground(true);
         Log.d(TAG, "onDestroy");
+    }
+
+
+    public void bindTest(){
+        Log.d(TAG, "bindTest");
+    }
+    public void addBuffer(ByteBuffer buffer){
+        Log.d(TAG, "addBuffer");
+        putToBufferQueue(buffer);
+    }
+    public void updateStatus(Boolean msgSending, Boolean msgWriting, String name){
+
     }
 }

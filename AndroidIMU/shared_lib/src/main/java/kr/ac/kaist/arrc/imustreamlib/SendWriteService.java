@@ -88,7 +88,7 @@ public class SendWriteService extends Service implements SensorEventListener {
     private int[] results = new int[5];
 
 
-    IBinder mBinder = new MyBinder();
+
 
     private Timer write_data = new Timer();
     private ArrayList<String> gyroData = new ArrayList<String>();
@@ -109,7 +109,7 @@ public class SendWriteService extends Service implements SensorEventListener {
 //    int VIDEO_TERM = 10*1000;
 
 
-
+    IBinder mBinder = new MyBinder();
     public class MyBinder extends Binder {
         public SendWriteService getService() { // 서비스 객체를 리턴
             return SendWriteService.this;
@@ -123,6 +123,15 @@ public class SendWriteService extends Service implements SensorEventListener {
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
+
+        Boolean new_msgSending = intent.getBooleanExtra("Send", false);
+        Boolean new_msgWriting = intent.getBooleanExtra("Write", false);
+        Boolean new_Classifying = intent.getBooleanExtra("Classify", false);
+        int new_SyncInfo = intent.getIntExtra("Sync", 0);
+        int send_code =  intent.getIntExtra("ToClient", -1);
+
+
+        updateStatus(new_msgSending, new_msgWriting, new_Classifying, new_SyncInfo, "onBind");
 
         return mBinder;
     }
@@ -228,34 +237,21 @@ public class SendWriteService extends Service implements SensorEventListener {
 
 
     }
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
+    public void updateStatus(Boolean new_msgSending, Boolean new_msgWriting, Boolean new_Classifying, int new_SyncInfo, String name){
+        msgSending = new_msgSending;
+        Classifying = new_Classifying;
+        syncInfo = new_SyncInfo;
 
-        msgSending = intent.getBooleanExtra("Send", false);
-
-
-        Boolean new_msgWriting = intent.getBooleanExtra("Write", false);
         if(msgWriting && !new_msgWriting){
             saveGyrodata = new SaveGyroDataTask();
             saveGyrodata.execute();
         }
         msgWriting = new_msgWriting;
-//        String name = intent.getStringExtra("Name");
 
-        Classifying = intent.getBooleanExtra("Classify", false);
-
-        syncInfo = intent.getIntExtra("Sync", 0);
-
-        int send_code =  intent.getIntExtra("ToClient", -1);
-
-
-        Log.d(TAG, "onStartCommand status:"+msgSending+"|"+msgWriting);
 
         startSocketComm();
 
         // get feedback from phone [[only in glass]]
-
         if(this_device_id==2){
             Log.d(TAG, "getFromServer "+msg_socket_get.getStatus()+"|"+msgSending +"|"+syncInfo);
             if(msg_socket_get.getStatus() == AsyncTask.Status.RUNNING){
@@ -277,8 +273,23 @@ public class SendWriteService extends Service implements SensorEventListener {
             }
         }
 
+        Log.d(TAG, "updateStatus status:"+msgSending+"|"+msgWriting+"(from: "+name+")");
 
-//        return super.onStartCommand(intent, flags, startId);
+
+    }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand");
+
+        Boolean new_msgSending = intent.getBooleanExtra("Send", false);
+        Boolean new_msgWriting = intent.getBooleanExtra("Write", false);
+        Boolean new_Classifying = intent.getBooleanExtra("Classify", false);
+        int new_SyncInfo = intent.getIntExtra("Sync", 0);
+        int send_code =  intent.getIntExtra("ToClient", -1);
+
+
+        updateStatus(new_msgSending, new_msgWriting, new_Classifying, new_SyncInfo, "onStartCommand");
+
         Log.d(TAG, "onStartCommand end");
         return Service.START_REDELIVER_INTENT;
     }
@@ -415,22 +426,9 @@ public class SendWriteService extends Service implements SensorEventListener {
                 msgBuffer.putFloat(52, MAG_X);
                 msgBuffer.putFloat(56, MAG_Y);
                 msgBuffer.putFloat(60, MAG_Z);
-                try {
-                    if (bufferQueue.remainingCapacity() < 1) {
-                        bufferQueue.take();
-                    }
-                    bufferQueue.put(msgBuffer);
-                } catch (InterruptedException ex) {
-                    Log.d(TAG, "Error on put sensor values");
-                }
 
-//                String testing = df.format(GYRO_X)+", "+df.format(GYRO_Y)+", "+df.format(GYRO_Z)+", "
-//                        + df.format(ACC_X)+", "+df.format(ACC_Y)+", "+df.format(ACC_Z)+", "
-//                        + df.format(ROT_X)+", "+df.format(ROT_Y)+", "+df.format(ROT_Z)+", "+df.format(ROT_W)+", "
-//                        + TIME + "," +
-//                        this_device_id + "," +
-//                        df.format(MAG_X)+", "+df.format(MAG_Y)+", "+df.format(MAG_Z);
-//                Log.d("testing", testing);
+                putToBufferQueue(msgBuffer);
+
             }
 
 
@@ -447,7 +445,15 @@ public class SendWriteService extends Service implements SensorEventListener {
         }
     }
 
-    private void putToBufferQueue(){
+    public void putToBufferQueue(ByteBuffer msgBuffer){
+        try {
+            if (bufferQueue.remainingCapacity() < 1) {
+                bufferQueue.take();
+            }
+            bufferQueue.put(msgBuffer);
+        } catch (InterruptedException ex) {
+            Log.d(TAG, "Error on put ByteBuffer to bufferQueue");
+        }
 
     }
 

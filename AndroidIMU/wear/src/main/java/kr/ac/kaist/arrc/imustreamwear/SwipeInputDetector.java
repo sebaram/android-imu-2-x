@@ -69,7 +69,7 @@ public abstract class SwipeInputDetector {
 
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "time,event,x,y: "+event.getEventTime() +","+event.getAction()+"," + event.getX() + "," + event.getY());
-
+        onTouchEvent2(event);
         // swipe event detection
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -139,6 +139,7 @@ public abstract class SwipeInputDetector {
 
     public abstract void onTwoFingersDoubleTap();
     public abstract void onSwipeEvent(String direction);
+    public abstract void onTouchEvent2(MotionEvent event);
 
 
 }

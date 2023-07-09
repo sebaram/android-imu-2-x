@@ -2,10 +2,12 @@ package kr.ac.kaist.arrc.imustreamwear;
 
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -15,6 +17,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -38,6 +41,7 @@ import java.nio.ByteBuffer;
 
 import kr.ac.kaist.arrc.R;
 import kr.ac.kaist.arrc.imustreamlib.CONSTANTS;
+import kr.ac.kaist.arrc.imustreamlib.SendWriteService;
 import kr.ac.kaist.arrc.imustreamlib.SocketComm;
 import kr.ac.kaist.arrc.imustreamlib.ReturningValues;
 import kr.ac.kaist.arrc.imustreamlib.VibratorTool;
@@ -71,10 +75,15 @@ public class MainActivity extends WearableActivity {
     private Boolean msgSending = false;
     private Boolean msgWriting = false;
 
+    private Boolean mBounded = false;
+    private SendWriteWear mSendService;
+
+
 
 //    TwoFingersDoubleTapDetector twoFingersListener;
     SwipeInputDetector twoFingersListener;
     private boolean showUI = true;
+    ByteBuffer msgBuffer;
 
     public static final String myPref = "IP_addr";
 
@@ -143,10 +152,44 @@ public class MainActivity extends WearableActivity {
 
 
 
-
+        msgBuffer = ByteBuffer.allocate(CONSTANTS.BYTE_SIZE);
 
         //region Exit by two fingers double tap
         twoFingersListener = new SwipeInputDetector() {
+            @Override
+            public void onTouchEvent2(MotionEvent event) {
+
+
+                msgBuffer.clear();
+
+                msgBuffer.putFloat(0, event.getX());
+                msgBuffer.putFloat(4, event.getY());
+                msgBuffer.putFloat(8, event.getAction());
+
+//                msgBuffer.putFloat(12, event.getAxisValue());
+//                msgBuffer.putFloat(16, ACC_Y);
+//                msgBuffer.putFloat(20, ACC_Z);
+//
+                msgBuffer.putFloat(24, -99);
+                msgBuffer.putFloat(28, -99);
+                msgBuffer.putFloat(32, -99);
+                msgBuffer.putFloat(36, -99);
+
+                // set Time to use sending time as reference
+                // TODO: need to include reference time of three sensors
+                msgBuffer.putLong(40, System.currentTimeMillis());
+                msgBuffer.putFloat(48, 11);   // watch touch event
+
+                msgBuffer.putFloat(52, event.getEventTime());
+//                msgBuffer.putFloat(52, MAG_X);
+//                msgBuffer.putFloat(56, MAG_Y);
+//                msgBuffer.putFloat(60, MAG_Z);
+
+                mSendService.addBuffer(msgBuffer);
+                Log.d(TAG, "onTouchEvent2");
+
+
+            }
             @Override
             public void onTwoFingersDoubleTap() {
                 if(showUI){
@@ -475,19 +518,26 @@ public class MainActivity extends WearableActivity {
     }
 
     private void startSendWriteService(){
-        Intent intent = new Intent(
-                getApplicationContext(),//현재제어권자
-                SendWriteWear.class); // 이동할 컴포넌트
-//        Intent intent = new Intent(
-//                getApplicationContext(),//현재제어권자
-//                SendWriteService.class); // 이동할 컴포넌트
-        intent.putExtra("Send", msgSending);
-        intent.putExtra("Write", msgWriting);
-        intent.putExtra("Name", NAME);
+
+        if(!mBounded){
+            Intent intent = new Intent(
+                    getApplicationContext(),//현재제어권자
+                    SendWriteWear.class); // 이동할 컴포넌트
+
+            intent.putExtra("Send", msgSending);
+            intent.putExtra("Write", msgWriting);
+            intent.putExtra("Name", NAME);
+
+            bindService(intent, mConnection, BIND_AUTO_CREATE);
+
+        }else{
+            mSendService.updateStatus(msgSending, msgWriting, NAME);
+        }
 
         SocketComm.writeCurrentStatus(msgSending, msgWriting, NAME);
 
-        startService(intent); // 서비스 시작
+        Log.d("SendWriteWear", "Service bound");
+//        startService(intent); // 서비스 시작
 
     }
     private void stopSendWriteService(){
@@ -495,15 +545,34 @@ public class MainActivity extends WearableActivity {
                 getApplicationContext(),//현재제어권자
                 SendWriteWear.class); // 이동할 컴포넌트
 
-//        Intent intent = new Intent(
-//                getApplicationContext(),//현재제어권자
-//                SendWriteService.class); // 이동할 컴포넌트
 
         SocketComm.writeCurrentStatus(msgSending, msgWriting, NAME);
 
-        stopService(intent); // 서비스 시작
+        if(mBounded) {
+            unbindService(mConnection);
+            mBounded = false;
+        }
+//        stopService(intent); // 서비스 시작
 
     }
+
+    ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Toast.makeText(getApplicationContext(), "Service is disconnected", 1000).show();
+            mBounded = false;
+            mSendService = null;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Toast.makeText(getApplicationContext(), "Service is connected", 1000).show();
+            mBounded = true;
+            SendWriteService.MyBinder mLocalBinder = (SendWriteService.MyBinder)service;
+            mSendService = (SendWriteWear) mLocalBinder.getService();
+            mSendService.bindTest();
+        }
+    };
 
     private boolean isServiceRunning() {
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
