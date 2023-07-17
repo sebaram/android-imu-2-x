@@ -71,44 +71,20 @@ public abstract class SwipeInputDetector {
         Log.d(TAG, "time,event,x,y: "+event.getEventTime() +","+event.getAction()+"," + event.getX() + "," + event.getY());
         onTouchEvent2(event);
         // swipe event detection
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                // reset(event.getDownTime());
-                xPositions = new ArrayList<>();
-                yPositions = new ArrayList<>();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (event.getPointerCount() == 1) {
-                    xPositions.add(event.getX());
-                    yPositions.add(event.getY());
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                if (event.getPointerCount() == 1){
-                    xPositions.add(event.getX());
-                    yPositions.add(event.getY());
-
-//                    float x = event.getX();
-//                    float y = event.getY();
-//                    float angle = calculateAngle(x, y);
-//                    float distance = calculateDistance(x, y);
-//                    Log.d(TAG, "UP angle: " + angle + ", distance: " + distance);
-//                    calLineFit();
-//                    if (distance > DISTANCE_THRE) {
-//                        if (angle > 45 && angle < 135) {
-//                            onSwipeEvent("up");
-//                        } else if (angle > 225 && angle < 315) {
-//                            onSwipeEvent("down");
-//                        } else if (angle > 135 && angle < 225) {
-//                            onSwipeEvent("left");
-//                        } else {
-//                            onSwipeEvent("right");
-//                        }
-//                    }
-                }
-
-                break;
-        }
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                // reset(event.getDownTime());
+//                xPositions = new ArrayList<>();
+//                yPositions = new ArrayList<>();
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//            case MotionEvent.ACTION_UP:
+//                if (event.getPointerCount() == 1){
+//                    xPositions.add(event.getX());
+//                    yPositions.add(event.getY());
+//                }
+//                break;
+//        }
 
 
 

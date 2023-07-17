@@ -2,9 +2,13 @@ import pandas as pd
 
 import os
 root = "230717_jyTestData"
+target_ip = "192.168.0.67"
+
+root = "SensorDATA"
+target_ip = "192.168.0.131"
 
 dfs = []
-for one_csv in [a for a in os.listdir(root) if a.endswith("192.168.0.67.csv")]:
+for one_csv in [a for a in os.listdir(root) if a.endswith(f"{target_ip}.csv")]:
     dfs.append( pd.read_csv(os.path.join(root, one_csv)))
 all_df = pd.concat(dfs, ignore_index=True)
 
