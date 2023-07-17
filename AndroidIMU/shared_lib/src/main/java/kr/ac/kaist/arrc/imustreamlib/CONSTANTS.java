@@ -60,7 +60,7 @@ public class CONSTANTS {
     // Gyro    Acc,   Rotvec  Millis  ID  MAG
     // 4,4,4, 4,4,4, 4,4,4,4,   8,    4, 4,4,4
     public static int BYTE_SIZE = 64;
-    public static int QUEUE_SIZE = 30;
+    public static int QUEUE_SIZE = 100;
 
     public static void setSensorDelay(int delay) {
         SENSOR_DELAY = delay;

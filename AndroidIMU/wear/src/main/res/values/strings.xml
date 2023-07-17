@@ -2,7 +2,7 @@
     <style name="AppTheme" parent="@android:style/Theme.DeviceDefault">
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
-    <string name="app_name">IMUstream</string>
+    <string name="app_name">ComboInput</string>
 
 
     <string name="network_start">Connect</string>
