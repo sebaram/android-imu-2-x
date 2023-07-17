@@ -110,6 +110,7 @@ public class SendWriteService extends Service implements SensorEventListener {
 
 
     IBinder mBinder = new MyBinder();
+    ServiceCallbacks serviceCallbacks;
     public class MyBinder extends Binder {
         public SendWriteService getService() { // 서비스 객체를 리턴
             return SendWriteService.this;
@@ -194,8 +195,8 @@ public class SendWriteService extends Service implements SensorEventListener {
             }, 10000, VIDEO_TERM);
             Log.d(TAG, "Device type: 2(glass)");
         } else if (Build.MODEL.contains("Watch") || Build.MODEL.contains("Q Explorist HR") || Build.MODEL.contains("Q Venture HR") ) {
-            this_device_id = 1;
-            Log.d(TAG, "Device type: 1(watch)");
+            this_device_id = 2;
+            Log.d(TAG, "Device type: 2 [1(watch)]");
         } else{
             this_device_id = 0;
             Log.d(TAG, "Device type: default |"+Build.MODEL);
@@ -273,7 +274,7 @@ public class SendWriteService extends Service implements SensorEventListener {
             }
         }
 
-        Log.d(TAG, "updateStatus status:"+msgSending+"|"+msgWriting+"(from: "+name+")");
+        Log.d(TAG, "updateStatus status: sending="+msgSending+", writing="+msgWriting+", syncInfo="+syncInfo+"(from: "+name+")");
 
 
     }
@@ -470,6 +471,10 @@ public class SendWriteService extends Service implements SensorEventListener {
 
     }
 
+    public void setCallbacks(ServiceCallbacks callbacks) {
+        serviceCallbacks = callbacks;
+    }
+
 
 
 
@@ -597,8 +602,27 @@ public class SendWriteService extends Service implements SensorEventListener {
                             AudioFeedbackTool.playSuccess(getApplicationContext());
 
                             startSocketComm(true);
+                        } else if(receivedMsg==23){
+                            // Part for the direction cue
+                            float side_x = buf.getFloat(4);
+                            float side_y = buf.getFloat(8);
+                            float bezel_direction = buf.getFloat(12);
+                            if(side_x==-1 && side_y==0){
+                                // left
+                                serviceCallbacks.updateScreen("left");
+                            }else if(side_x==1 && side_y==0) {
+                                // right
+                                serviceCallbacks.updateScreen("right");
+                            }else if(side_x==0 && side_y==-1) {
+                                // up
+                                serviceCallbacks.updateScreen("up");
+                            }else if(side_x==0 && side_y==1) {
+                                // down
+                                serviceCallbacks.updateScreen("down");
+                            }
+
                         }
-                        Log.d(TAG, "getFromServer|receive packet " + buf.getLong(40) + ":" + buf.getFloat(0));
+                        Log.d(TAG, "getFromServer|receive packet: " + buf.getFloat(0)+","+ buf.getFloat(4)+","+ buf.getFloat(8)+","+ buf.getFloat(12)+","+ buf.getFloat(16)+","+ buf.getFloat(20)+","+ buf.getFloat(24)+","+ buf.getFloat(28)+","+ buf.getFloat(32)+","+ buf.getFloat(36)+","+ buf.getLong(40));
 
 
                     } catch (Exception e) {

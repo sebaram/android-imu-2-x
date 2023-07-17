@@ -42,6 +42,7 @@ import java.nio.ByteBuffer;
 import kr.ac.kaist.arrc.R;
 import kr.ac.kaist.arrc.imustreamlib.CONSTANTS;
 import kr.ac.kaist.arrc.imustreamlib.SendWriteService;
+import kr.ac.kaist.arrc.imustreamlib.ServiceCallbacks;
 import kr.ac.kaist.arrc.imustreamlib.SocketComm;
 import kr.ac.kaist.arrc.imustreamlib.ReturningValues;
 import kr.ac.kaist.arrc.imustreamlib.VibratorTool;
@@ -51,10 +52,10 @@ import kr.ac.kaist.arrc.imustreamlib.network.WifiReceiver;
 import static kr.ac.kaist.arrc.imustreamlib.CONSTANTS.FORCE_WIFI;
 
 
-public class MainActivity extends WearableActivity {
+public class MainActivity extends WearableActivity implements ServiceCallbacks {
 
 
-    private TextView tv_targetip, tv_deviceinfo;
+    private TextView tv_targetip, tv_deviceinfo, tv_status;
     Button btn_startstop, btn_stopall, btn_write, btn_freqchange;
 
     private VibratorTool vib_tool;
@@ -86,6 +87,7 @@ public class MainActivity extends WearableActivity {
     ByteBuffer msgBuffer;
 
     public static final String myPref = "IP_addr";
+    String displayStatus = "something";
 
     AlertDialog ip_change_show;
 
@@ -115,6 +117,7 @@ public class MainActivity extends WearableActivity {
         tv_deviceinfo = (TextView) findViewById(R.id.tv_deviceinfo);
 //        updateMyStatus();
 //        tv_deviceinfo.setText(NAME+"\n"+Utils.getIPAddress(true));
+        tv_status = (TextView) findViewById(R.id.tv_status);
 
 
         btn_startstop = (Button) findViewById(R.id.btn_startstop);
@@ -292,6 +295,10 @@ public class MainActivity extends WearableActivity {
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop");
+        if(mBounded){
+            mSendService.setCallbacks(null);
+            stopSendWriteService();
+        }
 
         super.onStop();
     }
@@ -517,6 +524,23 @@ public class MainActivity extends WearableActivity {
         }
     }
 
+    @Override
+    public void updateScreen(String msg) {
+        Log.d(TAG, "updateScreen");
+        Log.d(TAG, "updateScreen|"+msg);
+        displayStatus = msg;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tv_status.setText(displayStatus);
+            }
+        });
+
+
+    }
+
+
+
     private void startSendWriteService(){
 
         if(!mBounded){
@@ -571,6 +595,7 @@ public class MainActivity extends WearableActivity {
             SendWriteService.MyBinder mLocalBinder = (SendWriteService.MyBinder)service;
             mSendService = (SendWriteWear) mLocalBinder.getService();
             mSendService.bindTest();
+            mSendService.setCallbacks(MainActivity.this); // register
         }
     };
 
