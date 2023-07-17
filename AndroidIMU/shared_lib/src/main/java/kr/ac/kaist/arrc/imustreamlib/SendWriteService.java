@@ -607,19 +607,24 @@ public class SendWriteService extends Service implements SensorEventListener {
                             float side_x = buf.getFloat(4);
                             float side_y = buf.getFloat(8);
                             float bezel_direction = buf.getFloat(12);
+
+                            String result_str = "";
                             if(side_x==-1 && side_y==0){
                                 // left
-                                serviceCallbacks.updateScreen("left");
+                                result_str = "left";
                             }else if(side_x==1 && side_y==0) {
                                 // right
-                                serviceCallbacks.updateScreen("right");
-                            }else if(side_x==0 && side_y==-1) {
-                                // up
-                                serviceCallbacks.updateScreen("up");
+                                result_str = "right";
                             }else if(side_x==0 && side_y==1) {
+                                // up
+                                result_str = "up";
+                            }else if(side_x==0 && side_y==-1) {
                                 // down
-                                serviceCallbacks.updateScreen("down");
+                                result_str = "down";
                             }
+
+                            result_str += (bezel_direction == 1) ? "\nin>>OUT" : "\nOUT>>in";
+                            serviceCallbacks.updateScreen(result_str);
 
                         }
                         Log.d(TAG, "getFromServer|receive packet: " + buf.getFloat(0)+","+ buf.getFloat(4)+","+ buf.getFloat(8)+","+ buf.getFloat(12)+","+ buf.getFloat(16)+","+ buf.getFloat(20)+","+ buf.getFloat(24)+","+ buf.getFloat(28)+","+ buf.getFloat(32)+","+ buf.getFloat(36)+","+ buf.getLong(40));
