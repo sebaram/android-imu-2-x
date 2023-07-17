@@ -163,7 +163,8 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
             public void onTouchEvent2(MotionEvent event) {
 
 
-                msgBuffer.clear();
+//                msgBuffer.clear();
+                msgBuffer = ByteBuffer.allocate(CONSTANTS.BYTE_SIZE);
 
                 msgBuffer.putFloat(0, event.getX());
                 msgBuffer.putFloat(4, event.getY());
@@ -179,7 +180,6 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
                 msgBuffer.putFloat(36, -99);
 
                 // set Time to use sending time as reference
-                // TODO: need to include reference time of three sensors
                 long cutTime = System.currentTimeMillis();
                 msgBuffer.putLong(40, cutTime);
                 msgBuffer.putFloat(48, 11);   // watch touch event
