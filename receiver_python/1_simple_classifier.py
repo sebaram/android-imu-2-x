@@ -86,7 +86,9 @@ y_str = [target_str[one] for one in y]
 target_order = [target_str[i] for i in range(len(target_str))]
 
 
-
+features = pd.DataFrame(X, columns=X_feature_names)
+features.loc[:,"Target"] = y_str
+features.to_csv("features.csv", index=False)
 
 
 #%%

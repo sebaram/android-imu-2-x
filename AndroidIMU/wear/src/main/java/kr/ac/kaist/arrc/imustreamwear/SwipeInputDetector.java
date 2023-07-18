@@ -6,6 +6,9 @@ import android.view.ViewConfiguration;
 
 import java.util.ArrayList;
 
+import kr.ac.kaist.arrc.imustreamlib.classifier.ComboInput;
+import kr.ac.kaist.arrc.imustreamlib.classifier.RunWeka;
+
 
 public abstract class SwipeInputDetector {
     String TAG = "SwipeInputDetector";
@@ -21,7 +24,11 @@ public abstract class SwipeInputDetector {
 
     private ArrayList<Float> xPositions;
     private ArrayList<Float> yPositions;
+    private ArrayList<Long> time;
 
+    public String results = "";
+    private Long lastTime = 0L;
+    private float deltatime = 1000;
 
     private void resetDoubleTap(long time) {
         mFirstDownTime = time;
@@ -36,55 +43,58 @@ public abstract class SwipeInputDetector {
         DISTANCE_THRE = (int)(0.9 * WIDTH/2);
         Log.d(TAG, "updateDisplaySize: " + WIDTH + ", " + HEIGHT);
     }
-    private float calculateAngle(float x, float y){
-        float angle = (float) Math.toDegrees(Math.atan2(y - HEIGHT/2, x - WIDTH/2));
-        if(angle < 0){
-            angle += 360;
+
+    public String classifySwipe(){
+        String result = "";
+        double[] input = ComboInput.genFeatures(xPositions, yPositions, time);
+        try{
+            result = RunWeka.classifyData("", input);
+            if(System.currentTimeMillis()-lastTime>deltatime){
+                results = result;
+            }else{
+                results += "\n"+result;
+            }
+            lastTime = System.currentTimeMillis();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return angle;
-    }
-    private float calculateDistance(float x, float y){
-        float distance = (float) Math.sqrt(Math.pow(x - WIDTH/2, 2) + Math.pow(y - HEIGHT/2, 2));
-        return distance;
-    }
-    private float calLineFit(){
-        float sumX = 0;
-        float sumY = 0;
-        float sumXY = 0;
-        float sumXX = 0;
-        float sumYY = 0;
-        for(int i = 0; i < xPositions.size(); i++){
-            sumX += xPositions.get(i);
-            sumY += yPositions.get(i);
-            sumXY += xPositions.get(i) * yPositions.get(i);
-            sumXX += xPositions.get(i) * xPositions.get(i);
-            sumYY += yPositions.get(i) * yPositions.get(i);
-        }
-        float a = (sumY * sumXX - sumX * sumXY) / (xPositions.size() * sumXX - sumX * sumX);
-        float b = (xPositions.size() * sumXY - sumX * sumY) / (xPositions.size() * sumXX - sumX * sumX);
-        float r = (float) Math.sqrt((sumXY * sumXY + sumYY * sumYY) / (sumXX * sumXX + sumYY * sumYY));
-        Log.d(TAG, "calLineFit: " + a + ", " + b + ", " + r);
-        return r;
+        return results;
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d(TAG, "time,event,x,y: "+event.getEventTime() +","+event.getAction()+"," + event.getX() + "," + event.getY());
-        onTouchEvent2(event);
+//        Log.d(TAG, "time,event,x,y: "+event.getEventTime() +","+event.getAction()+"," + event.getX() + "," + event.getY());
         // swipe event detection
-//        switch (event.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                // reset(event.getDownTime());
-//                xPositions = new ArrayList<>();
-//                yPositions = new ArrayList<>();
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//            case MotionEvent.ACTION_UP:
-//                if (event.getPointerCount() == 1){
-//                    xPositions.add(event.getX());
-//                    yPositions.add(event.getY());
-//                }
-//                break;
-//        }
+        if(event.getPointerCount()<2){
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    // reset(event.getDownTime());
+                    xPositions = new ArrayList<>();
+                    yPositions = new ArrayList<>();
+                    time = new ArrayList<>();
+
+                    xPositions.add(event.getX());
+                    yPositions.add(event.getY());
+                    time.add(event.getEventTime());
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    xPositions.add(event.getX());
+                    yPositions.add(event.getY());
+                    time.add(event.getEventTime());
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (event.getPointerCount() == 1){
+                        xPositions.add(event.getX());
+                        yPositions.add(event.getY());
+                        time.add(event.getEventTime());
+
+
+                    }
+
+                    break;
+            }
+        }
+
 
 
 
@@ -109,6 +119,8 @@ public abstract class SwipeInputDetector {
                     return true;
                 }
         }
+        onTouchEvent2(event);
+
 
         return false;
     }

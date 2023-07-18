@@ -1,5 +1,8 @@
 package kr.ac.kaist.arrc.imustreamlib;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by arrc on 4/10/2018.
  */
@@ -75,6 +78,18 @@ public class CONSTANTS {
     public static int ERROR_NOTI_TIME = 10000;
     public static int ERROR_NOTI_REPEAT = 2000;
 
+
+
+    public static Map GESTURE_CLASSES = new HashMap(){{
+        put(0,"left");
+        put(1,"down");
+        put(2,"up");
+        put(3,"right");
+
+        put(4,"null");
+
+    }};
+    public static double THRE_DIST = 0.8;
 
 }
 

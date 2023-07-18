@@ -46,6 +46,8 @@ import kr.ac.kaist.arrc.imustreamlib.ServiceCallbacks;
 import kr.ac.kaist.arrc.imustreamlib.SocketComm;
 import kr.ac.kaist.arrc.imustreamlib.ReturningValues;
 import kr.ac.kaist.arrc.imustreamlib.VibratorTool;
+import kr.ac.kaist.arrc.imustreamlib.classifier.ComboInput;
+import kr.ac.kaist.arrc.imustreamlib.classifier.RunWeka;
 import kr.ac.kaist.arrc.imustreamlib.network.NetUtils;
 import kr.ac.kaist.arrc.imustreamlib.network.WifiReceiver;
 
@@ -91,13 +93,20 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
 
     AlertDialog ip_change_show;
 
-
+    private RunWeka runWeka;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // init Weka
+        runWeka = new RunWeka(getApplicationContext());
+        runWeka.loadModel();
+        runWeka.testClassify();
+
+
 
         tv_targetip = (TextView) findViewById(R.id.tv_target);
 //        tv_targetip.setText(CONSTANTS.IP_ADDRESS+":"+CONSTANTS.PORT);
@@ -161,38 +170,48 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
         twoFingersListener = new SwipeInputDetector() {
             @Override
             public void onTouchEvent2(MotionEvent event) {
+                //this function is called after onTouchEvent
+                if(event.getPointerCount()<2 && event.getAction() == MotionEvent.ACTION_UP){
+                    Log.d(TAG, "onTouchEvent: !single Finer && UP! runWeka");
+                    String result = this.classifySwipe();
+
+                    updateScreen(result);
 
 
-//                msgBuffer.clear();
-                msgBuffer = ByteBuffer.allocate(CONSTANTS.BYTE_SIZE);
+                }
 
-                msgBuffer.putFloat(0, event.getX());
-                msgBuffer.putFloat(4, event.getY());
-                msgBuffer.putFloat(8, event.getAction());
+                // send data when service is connected
+                if(mBounded && mSendService != null){
+                    //                msgBuffer.clear();
+                    msgBuffer = ByteBuffer.allocate(CONSTANTS.BYTE_SIZE);
+
+                    msgBuffer.putFloat(0, event.getX());
+                    msgBuffer.putFloat(4, event.getY());
+                    msgBuffer.putFloat(8, event.getAction());
 
 //                msgBuffer.putFloat(12, event.getAxisValue());
 //                msgBuffer.putFloat(16, ACC_Y);
 //                msgBuffer.putFloat(20, ACC_Z);
 //
-                msgBuffer.putFloat(24, -99);
-                msgBuffer.putFloat(28, -99);
-                msgBuffer.putFloat(32, -99);
-                msgBuffer.putFloat(36, -99);
+                    msgBuffer.putFloat(24, -99);
+                    msgBuffer.putFloat(28, -99);
+                    msgBuffer.putFloat(32, -99);
+                    msgBuffer.putFloat(36, -99);
 
-                // set Time to use sending time as reference
-                long cutTime = System.currentTimeMillis();
-                msgBuffer.putLong(40, cutTime);
-                msgBuffer.putFloat(48, 11);   // watch touch event
+                    // set Time to use sending time as reference
+                    long cutTime = System.currentTimeMillis();
+                    msgBuffer.putLong(40, cutTime);
+                    msgBuffer.putFloat(48, 11);   // watch touch event
 
-                msgBuffer.putFloat(52, event.getEventTime());
+                    msgBuffer.putFloat(52, event.getEventTime());
 //                msgBuffer.putFloat(52, MAG_X);
 //                msgBuffer.putFloat(56, MAG_Y);
 //                msgBuffer.putFloat(60, MAG_Z);
 
-                mSendService.addBuffer(msgBuffer);
-                Log.d(TAG, "onTouchEvent2: "+cutTime+" | "+event.getX()+","+event.getY()+"("+event.getAction()+")");
+                    mSendService.addBuffer(msgBuffer);
+                    Log.d(TAG, "onTouchEvent2: "+cutTime+" | "+event.getX()+","+event.getY()+"("+event.getAction()+")");
 
-
+                }
             }
             @Override
             public void onTwoFingersDoubleTap() {
@@ -527,8 +546,6 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
 
     @Override
     public void updateScreen(String msg) {
-        Log.d(TAG, "updateScreen");
-        Log.d(TAG, "updateScreen|"+msg);
         displayStatus = msg;
         runOnUiThread(new Runnable() {
             @Override
