@@ -3,6 +3,9 @@ import pandas as pd
 import os
 root = "230717_jyTestData"
 root = "230718_jyTestData"
+root = "230718_JSS"
+root = "230718_JSS2"
+# root = "230718_jyTestData2"
 target_ip = "192.168.0.67"
 
 # root = "SensorDATA"
@@ -33,9 +36,10 @@ schedule_df = pd.read_csv(s_path, index_col=0)
 
 schedule_df['sensor'] = schedule_df.apply(lambda x: sensor_df.loc[x["StartTime"]:x["CurrentTime"]], axis=1)
 schedule_df['len_sensor'] = schedule_df.apply(lambda x: len(x['sensor']), axis=1)
-schedule_df['touch'] = schedule_df.apply(lambda x: touch_df.loc[x["StartTime"]:x["CurrentTime"]], axis=1)
+schedule_df['touch'] = schedule_df.apply(lambda x: touch_df.loc[x["StartTime"]:x["CurrentTime"]+500], axis=1)
 schedule_df['len_touch'] = schedule_df.apply(lambda x: len(x['touch']), axis=1)
 
+schedule_df.to_pickle(f"{root}.pickle")
 #%%
 
 """Plot trial"""
