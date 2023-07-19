@@ -89,7 +89,8 @@ public class CONSTANTS {
         put(4,"null");
 
     }};
-    public static double THRE_DIST = 0.8;
+    public static double THRE_DIST = 0.6;
+    public static double THRE_DIFF = 0.33;
 
 }
 

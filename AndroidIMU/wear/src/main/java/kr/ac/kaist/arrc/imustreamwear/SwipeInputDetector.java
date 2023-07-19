@@ -27,6 +27,7 @@ public abstract class SwipeInputDetector {
     private ArrayList<Long> time;
 
     public String results = "";
+    public ArrayList<String> resultsArr;
     private Long lastTime = 0L;
     private float deltatime = 1000;
 
@@ -50,16 +51,19 @@ public abstract class SwipeInputDetector {
         try{
             result = RunWeka.classifyData("", input);
             if(System.currentTimeMillis()-lastTime>deltatime){
-                results = result;
-            }else{
-                results += "\n"+result;
+                // reset after deltatime passed
+                resultsArr =  new ArrayList<>();
+            }else if(resultsArr.size()>3 ){
+                // remove old input
+                resultsArr.remove(0);
             }
+            resultsArr.add(result);
             lastTime = System.currentTimeMillis();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return results;
+        return String.join("\n", resultsArr);
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -87,8 +91,6 @@ public abstract class SwipeInputDetector {
                         xPositions.add(event.getX());
                         yPositions.add(event.getY());
                         time.add(event.getEventTime());
-
-
                     }
 
                     break;

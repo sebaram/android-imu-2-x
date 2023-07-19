@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -20,6 +22,7 @@ import weka.core.*;
 import weka.core.converters.ConverterUtils;
 
 import static kr.ac.kaist.arrc.imustreamlib.CONSTANTS.GESTURE_CLASSES;
+import static kr.ac.kaist.arrc.imustreamlib.CONSTANTS.THRE_DIFF;
 import static kr.ac.kaist.arrc.imustreamlib.CONSTANTS.THRE_DIST;
 
 
@@ -139,21 +142,30 @@ public class RunWeka {
         classifyBuffer.remove(0);
 
         //Return String containing the probability distribution of the classes
+        double[] sorted_dis = distribution.clone();
+        Arrays.sort(sorted_dis);
+
         String out = "";
         int classified = 0;
+        int second = -1;
         for (int i = 0; i < distribution.length; i++) {
-            out += GESTURE_CLASSES.get(i) + ":" + String.format("%.2f", distribution[i]);
+            out += i+"."+GESTURE_CLASSES.get(i) + ":" + String.format("%.2f", distribution[i]);
             out += (i < distribution.length - 1) ? "," : "\n";
+
             //Update the highest distribution as the classified
-            if (distribution[i] > distribution[classified])
+            if(distribution[i]==sorted_dis[sorted_dis.length-1]){
                 classified = i;
+            } else if (distribution[i] == sorted_dis[sorted_dis.length-2]) {
+                second = i;
+            }
         }
         Log.d(TAG, "WEKA::classifyData::("+expected+") " + out);
+        Log.d(TAG, "WEKA::classifyData:: classified=" + classified + " second=" + second);
 
         /**
          * 1. distribution check
          * **/
-        if (distribution[classified] < THRE_DIST) {
+        if (distribution[classified] < THRE_DIST || distribution[classified] - distribution[second] < THRE_DIFF) {
 //            classified = 5;
             return "null";
         }else{
