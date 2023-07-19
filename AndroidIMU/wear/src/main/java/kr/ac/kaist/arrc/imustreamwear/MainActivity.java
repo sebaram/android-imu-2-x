@@ -328,8 +328,9 @@ public class MainActivity extends WearableActivity implements ServiceCallbacks {
 
 
         wakeLock.release();
-        unregisterReceiver(new WifiReceiver());
-
+        if (FORCE_WIFI) {
+            unregisterReceiver(new WifiReceiver());
+        }
         super.onDestroy();
     }
 
